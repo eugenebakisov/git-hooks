@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Prepares commit message with JIRA's ticket ID if branch name reflects it.
+# Courtesy of Mincong Huang: https://mincong.io/2019/07/23/prepare-commit-message-using-git-hook/
+#
+# An example hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source.  The hook's purpose is to edit the commit
+# message file. If the hook fails with a non-zero status,
+# the commit is aborted.
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+# SHA1=$3
+
+# Only add custom message when there is no commit source
+# ($COMMIT_SOURCE is empty). Otherwise, keep the default message
+# proposed by Git. Possible commit source: message, template,
+# merge, squash or commit. See https://git-scm.com/docs/githooks
+if [[ -z "$COMMIT_SOURCE" ]]
+then
+  ref=$(git rev-parse --abbrev-ref HEAD)
+  hint=$(cat "$COMMIT_MSG_FILE")
+  if [[ $ref =~ ^.*(SCRUM-[0-9]+).* ]]
+  then
+    ticket="(${BASH_REMATCH[1]}) "
+  fi
+  echo "feat: ${ticket}" > "$COMMIT_MSG_FILE"
+  echo "" >> "$COMMIT_MSG_FILE"
+  echo "# feat: (SCRUM-12345) add great feature" >> "$COMMIT_MSG_FILE"
+  echo "# fix: (SCRUM-12345) remove bug" >> "$COMMIT_MSG_FILE"
+  echo "# docs: (SCRUM-12345) add documentation for..." >> "$COMMIT_MSG_FILE"
+  echo "# refactor: (SCRUM-12345) simplify logic" >> "$COMMIT_MSG_FILE"
+  echo "# build: (SCRUM-12345) update CI or build tooling" >> "$COMMIT_MSG_FILE"
+  echo "# test: (SCRUM-12345) expand for edge case" >> "$COMMIT_MSG_FILE"
+  echo "# style: (SCRUM-12345) lein cljfmt fix" >> "$COMMIT_MSG_FILE"
+  echo "# BREAKING CHANGE: (SCRUM-12345) backwards incompatible change to public API" >> "$COMMIT_MSG_FILE"
+  echo "$hint" >> "$COMMIT_MSG_FILE"
+fi
